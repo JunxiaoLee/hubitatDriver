@@ -70,9 +70,11 @@ metadata {
 		capability "Switch"
 		capability "Valve"
 		capability "Water Sensor"
+		capability "WaterMeter"
 		capability "Configuration"
 		capability "Temperature Measurement"
 		capability "Configuration"
+		capability "Battery"
 		capability "Refresh"
 
 		command "paramCommands", [[name:"Select Command*", type: "ENUM", constraints: ["Refresh"] ]]
@@ -85,7 +87,7 @@ metadata {
 		attribute "temperatureAlarm", "string"
 		attribute "syncStatus", "string"
 
-		fingerprint mfr:"0063", prod:"0004", deviceId: "0001", deviceJoinName:"Jasco water valve"
+		fingerprint mfr:"0063", prod:"0004", deviceId: "0001", inClusters:"0x20,0x25,0x31,0x32,0x27,0x70,0x85,0x72,0x86",deviceJoinName:"Jasco water valve"
 	}
 
 	preferences {

@@ -30,7 +30,29 @@ https://github.com/krlaframboise/SmartThings/tree/master/devicetypes/zooz/zooz-z
  *  limitations under the License.
  *
 */
+/*
+metadata {
+    definition (name: "Jasco water valve", namespace: "djdizzyd", author: "Bryan Copeland", importUrl: "https://raw.githubusercontent.com/djdizzyd/hubitat/master/Drivers/Aeotec/DSC06106.groovy") {
+        capability "Refresh"
+        capability "Actuator"
+        capability "Sensor"
+        capability "Outlet"
+        capability "Configuration"
+        capability "Switch"
+        capability "PowerMeter"
+        capability "EnergyMeter"
+        capability "VoltageMeasurement"
+        capability "Polling"
 
+        fingerprint mfr:"0063", prod:"0004", deviceId:"0001", inClusters:"0x25,0x31,0x32,0x27,0x70,0x85,0x72,0x86", outClusters:"0x82", deviceJoinName: "Jasco water valve"
+    }
+    preferences {
+        configParams.each { input it.value.input }
+        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
+        input name: "txtEnable", type: "bool", title: "TXT Descriptive Logging", defaultValue: false
+    }
+}
+*/
 import groovy.transform.Field
 
 @Field static final String VERSION = "0.1.0" 
@@ -41,7 +63,7 @@ metadata {
 		name: "Jasco water valve",
 		namespace: "jtp10181",
 		author: "Jeff Page (@jtp10181)",
-		importUrl: ""
+		importUrl: "https://github.com/yinfeng23224/hubitatDriver/edit/main/JascoWaterValve.groovy"
 	) {
 		capability "Actuator"
 		capability "Sensor"

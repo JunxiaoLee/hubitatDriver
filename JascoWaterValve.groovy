@@ -53,14 +53,15 @@ metadata {
     }
 }
 */
+
 import groovy.transform.Field
 
 @Field static final String VERSION = "0.1.0" 
-@Field static final Map deviceModelNames = ["0101:0036":"ZAC36"]
+@Field static final Map deviceModelNames = ["0004:0001":"JascoWaterValve"]
 
 metadata {
 	definition (
-		name: "Jasco water valve",
+		name: "z-wave water flow shut off",
 		namespace: "jtp10181",
 		author: "Jeff Page (@jtp10181)",
 		importUrl: "https://github.com/yinfeng23224/hubitatDriver/edit/main/JascoWaterValve.groovy"
@@ -70,24 +71,26 @@ metadata {
 		capability "Switch"
 		capability "Valve"
 		capability "Water Sensor"
-		capability "WaterMeter"
 		capability "Configuration"
 		capability "Temperature Measurement"
 		capability "Configuration"
-		capability "Battery"
+        capability "Battery"
+      //  capability "getRate"
+        capability "LiquidFlowRate"
 		capability "Refresh"
 
 		command "paramCommands", [[name:"Select Command*", type: "ENUM", constraints: ["Refresh"] ]]
-
+        command "getBatteryLevel"
+        command "getRate"
 		//DEBUGGING
 		//command "debugShowVars"
 
 		//attribute "assocDNI2", "string"
 		//attribute "assocDNI3", "string"
-		attribute "temperatureAlarm", "string"
+		//attribute "temperatureAlarm", "string"
 		attribute "syncStatus", "string"
 
-		fingerprint mfr:"0063", prod:"0004", deviceId: "0001", inClusters:"0x20,0x25,0x31,0x32,0x27,0x70,0x85,0x72,0x86",deviceJoinName:"Jasco water valve"
+		fingerprint mfr:"0063", prod:"0004", deviceId: "0001", deviceJoinName:"z-wave water flow shut off"
 	}
 
 	preferences {
@@ -323,6 +326,21 @@ def refresh() {
 	logDebug "refresh..."
 	executeRefreshCmds()
 }
+
+def getBatteryLevel() {
+	logDebug "getBatteryLevel..."
+	List<String> cmds = []
+    cmds << batteryGetCmd()
+	sendCommands(cmds)
+}
+
+def getRate() {
+	logDebug "getRate..."
+	List<String> cmds = []
+    cmds << waterMeterGetCmd(waterMeter)
+	sendCommands(cmds)
+}
+
 
 //List<String> Temp() { logDebug "Temp..."}
 
@@ -572,30 +590,43 @@ void zwaveEvent(hubitat.zwave.commands.notificationv8.NotificationReport cmd, ep
 	}	
 }
 
-void zwaveEvent(hubitat.zwave.commands.meterv4.MeterReport cmd, ep=0) {
-	logTrace "${cmd} (ep ${ep})"
-        sendWaterMeterEvent(cmd.value)
+
+void zwaveEvent(hubitat.zwave.commands.batteryv1.BatteryReport cmd) {
+      Map evt = [name: "battery", unit: "%"]
+            if (cmd.batteryLevel == 0xFF) {
+            evt.descriptionText = "${device.displayName} has a low battery"
+            evt.value = 1
+      } else {
+            evt.value = cmd.batteryLevel
+            evt.descriptionText = "${device.displayName} battery is ${evt.value}${evt.unit}"
+      }
+      evt.isStateChange = true
+      if (txtEnable && evt.descriptionText) log.info evt.descriptionText
+      sendEvent(evt)
 }
 
 
-//void zwaveEvent(hubitat.zwave.commands.batteryv1.BatteryReport cmd, ep=0) {
-//	logTrace "${cmd} (ep ${ep})"
-//        sendBatteryEvent(cmd.value)
-//}
-void zwaveEvent(hubitat.zwave.commands.batteryv1.BatteryReport cmd, ep=0) {
-	logTrace "${cmd} (ep ${ep})"
-
-	Integer batLvl = cmd.batteryLevel
-	if (batLvl == 0xFF) {
-		batLvl = 1
-		logWarn "LOW BATTERY WARNING"
-	}
-
-	batLvl = validateRange(batLvl, 100, 1, 100)
-	String descText = "battery level is ${batLvl}%"
-    sendBatteryEvent(cmd.value)
-	//sendEventLog(name:"battery", value:batLvl, unit:"%", desc:descText, isStateChange:true)
+void zwaveEvent(hubitat.zwave.commands.meterv5.MeterReport cmd) {
+      
+      if (cmd.meterValue.size() > 0) {
+            Map evt = [:]
+          //Map evt = [name: "watermeter", unit: "GPM"]
+            if (cmd.meterType == 3) {
+                  switch (cmd.scale) {
+                        case 0:
+                              evt.name = "rate"
+                              evt.value = cmd.scaledMeterValue
+                              evt.unit = "GPM"
+                              evt.descriptionText = "${device.displayName} rate is: ${evt.value}${evt.unit}"
+                           //   eventProcess(evt)
+                              sendEvent(evt)
+                              break
+            }
+        }
+    }
 }
+
+
 
 
 

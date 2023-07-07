@@ -64,7 +64,7 @@ metadata {
 		name: "z-wave water flow shut off",
 		namespace: "jtp10181",
 		author: "Jeff Page (@jtp10181)",
-		importUrl: "https://github.com/yinfeng23224/hubitatDriver/edit/main/JascoWaterValve.groovy"
+		importUrl: "https://raw.githubusercontent.com/JunxiaoLee/hubitatDriver/main/JascoWaterValve.groovy"
 	) {
 		capability "Actuator"
 		capability "Sensor"

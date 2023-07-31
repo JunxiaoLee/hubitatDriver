@@ -428,19 +428,19 @@ void zwaveEvent(hubitat.zwave.commands.multichannelv4.MultiChannelCmdEncap cmd) 
 	logTrace "${cmd} --ENCAP-- ${encapsulatedCmd}"
 	
 	if (encapsulatedCmd) {
-		zwaveEvent(encapsulatedCmd, cmd.sourceEndPoint as Integer)
+		(encapsulatedCmd, cmd.sourceEndPoint as Integer)
 	} else {
 		log.warn "Unable to extract encapsulated cmd from $cmd"
 	}
 }
 
 //Decodes Supervision Encapsulated Commands (and replies to device)
-void zwaveEvent(hubitat.zwave.commands.supervisionv1.SupervisionGet cmd, ep=0) {
+void (hubitat.zwave.commands.supervisionv1.SupervisionGet cmd, ep=0) {
 	def encapsulatedCmd = cmd.encapsulatedCommand(commandClassVersions)
 	logTrace "${cmd} --ENCAP-- ${encapsulatedCmd}"
 	
 	if (encapsulatedCmd) {
-		zwaveEvent(encapsulatedCmd, ep)
+		(encapsulatedCmd, ep)
 	} else {
 		log.warn "Unable to extract encapsulated cmd from $cmd"
 	}
@@ -449,7 +449,7 @@ void zwaveEvent(hubitat.zwave.commands.supervisionv1.SupervisionGet cmd, ep=0) {
 }
 
 //Reports back from Supervision Encapsulated Commands
-void zwaveEvent(hubitat.zwave.commands.supervisionv1.SupervisionReport cmd, ep=0 ) {
+void (hubitat.zwave.commands.supervisionv1.SupervisionReport cmd, ep=0 ) {
 	logDebug "Supervision Report - SessionID: ${cmd.sessionID}, Status: ${cmd.status}"
 	if (supervisedPackets["${device.id}"] == null) { supervisedPackets["${device.id}"] = [:] }
 
@@ -465,7 +465,7 @@ void zwaveEvent(hubitat.zwave.commands.supervisionv1.SupervisionReport cmd, ep=0
 	}
 }
 
-void zwaveEvent(hubitat.zwave.commands.versionv3.VersionReport cmd) {
+void (hubitat.zwave.commands.versionv3.VersionReport cmd) {
 	logTrace "${cmd}"
 
 	String subVersion = String.format("%02d", cmd.firmware0SubVersion)
@@ -580,7 +580,7 @@ void zwaveEvent(hubitat.zwave.commands.notificationv8.NotificationReport cmd, ep
 			sendWaterAlarmEvent(cmd.event)
 			break
 		case waterValve:
-			sendValveEvent(cmd.event, cmd.eventParameter[0])
+			sendValveEvent(cmd.event, cmd.eventParameter[2])
 			break
         case homeSecurity:
 			sendhomeSecurityEvent(cmd.event)
@@ -613,9 +613,9 @@ void zwaveEvent(hubitat.zwave.commands.meterv5.MeterReport cmd) {
           //Map evt = [name: "watermeter", unit: "GPM"]
             if (cmd.meterType == 3) {
                   switch (cmd.scale) {
-                        case 0:
+                        case 2:
                               evt.name = "rate"
-                              evt.value = cmd.scaledMeterValue
+                              evt.value = cmd.scaledMeterValue*3600/cmd.deltaTime
                               evt.unit = "GPM"
                               evt.descriptionText = "${device.displayName} rate is: ${evt.value}${evt.unit}"
                            //   eventProcess(evt)

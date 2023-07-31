@@ -450,7 +450,7 @@ void (hubitat.zwave.commands.supervisionv1.SupervisionGet cmd, ep=0) {
 }
 
 //Reports back from Supervision Encapsulated Commands
-void (hubitat.zwave.commands.supervisionv1.SupervisionReport cmd, ep=0 ) {
+void zwaveEvent(hubitat.zwave.commands.supervisionv1.SupervisionReport cmd, ep=0 ) {
 	logDebug "Supervision Report - SessionID: ${cmd.sessionID}, Status: ${cmd.status}"
 	if (supervisedPackets["${device.id}"] == null) { supervisedPackets["${device.id}"] = [:] }
 
@@ -466,7 +466,7 @@ void (hubitat.zwave.commands.supervisionv1.SupervisionReport cmd, ep=0 ) {
 	}
 }
 
-void (hubitat.zwave.commands.versionv3.VersionReport cmd) {
+void zwaveEvent(hubitat.zwave.commands.versionv3.VersionReport cmd) {
 	logTrace "${cmd}"
 
 	String subVersion = String.format("%02d", cmd.firmware0SubVersion)

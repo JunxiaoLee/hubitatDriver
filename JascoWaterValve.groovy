@@ -440,7 +440,7 @@ void (hubitat.zwave.commands.supervisionv1.SupervisionGet cmd, ep=0) {
 	logTrace "${cmd} --ENCAP-- ${encapsulatedCmd}"
 	
 	if (encapsulatedCmd) {
-		(encapsulatedCmd, ep)
+		zwaveEvent(encapsulatedCmd, ep)
 	} else {
 		log.warn "Unable to extract encapsulated cmd from $cmd"
 	}

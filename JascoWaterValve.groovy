@@ -1,66 +1,22 @@
 /*
- *  Zooz ZAC36 Titan Valve Actuator
- *    - Model: ZAC36 - MINIMUM FIRMWARE 1.10
+ *  Jascowatervalue
+ *    - Model: watervalueshutooff - MINIMUM FIRMWARE 1.10
  *
  *  Changelog:
 
-## [0.1.0] - 2021-09-12 (@jtp10181)
+## [0.1.0] - 2023-04-03 
   ### Added
   - Initial Release, supports all known settings and features except associations
-
-NOTICE: This file has been created by *Jeff Page* with some code used 
-	from the original work of *Zooz* under compliance with the Apache 2.0 License.
-
-Below link is for original source (Kevin LaFramboise @krlaframboise)
-https://github.com/krlaframboise/SmartThings/tree/master/devicetypes/zooz/zooz-zac36-titan-valve-actuator.src
-
- *  Copyright 2021 Jeff Page
- *  Copyright 2021 Zooz
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
 */
-/*
-metadata {
-    definition (name: "Jasco water valve", namespace: "djdizzyd", author: "Bryan Copeland", importUrl: "https://raw.githubusercontent.com/djdizzyd/hubitat/master/Drivers/Aeotec/DSC06106.groovy") {
-        capability "Refresh"
-        capability "Actuator"
-        capability "Sensor"
-        capability "Outlet"
-        capability "Configuration"
-        capability "Switch"
-        capability "PowerMeter"
-        capability "EnergyMeter"
-        capability "VoltageMeasurement"
-        capability "Polling"
 
-        fingerprint mfr:"0063", prod:"0004", deviceId:"0001", inClusters:"0x25,0x31,0x32,0x27,0x70,0x85,0x72,0x86", outClusters:"0x82", deviceJoinName: "Jasco water valve"
-    }
-    preferences {
-        configParams.each { input it.value.input }
-        input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
-        input name: "txtEnable", type: "bool", title: "TXT Descriptive Logging", defaultValue: false
-    }
-}
-*/
 import groovy.transform.Field
 
 @Field static final String VERSION = "0.1.0" 
-@Field static final Map deviceModelNames = ["0101:0036":"ZAC36"]
+@Field static final Map deviceModelNames = ["0004:0001":"JascoWaterValve"]
 
 metadata {
 	definition (
-		name: "Jasco water valve",
+		name: "z-wave water flow shut off",
 		namespace: "jtp10181",
 		author: "Jeff Page (@jtp10181)",
 		importUrl: "https://github.com/yinfeng23224/hubitatDriver/edit/main/JascoWaterValve.groovy"
@@ -70,24 +26,26 @@ metadata {
 		capability "Switch"
 		capability "Valve"
 		capability "Water Sensor"
-		capability "WaterMeter"
 		capability "Configuration"
 		capability "Temperature Measurement"
 		capability "Configuration"
-		capability "Battery"
+        capability "Battery"
+      //  capability "getRate"
+        capability "LiquidFlowRate"
 		capability "Refresh"
 
 		command "paramCommands", [[name:"Select Command*", type: "ENUM", constraints: ["Refresh"] ]]
-
+        command "getBatteryLevel"
+        command "getRate"
 		//DEBUGGING
 		//command "debugShowVars"
 
 		//attribute "assocDNI2", "string"
 		//attribute "assocDNI3", "string"
-		attribute "temperatureAlarm", "string"
+		//attribute "temperatureAlarm", "string"
 		attribute "syncStatus", "string"
 
-		fingerprint mfr:"0063", prod:"0004", deviceId: "0001", inClusters:"0x20,0x25,0x31,0x32,0x27,0x70,0x85,0x72,0x86",deviceJoinName:"Jasco water valve"
+		fingerprint mfr:"0063", prod:"0004", deviceId: "0001", deviceJoinName:"z-wave water flow shut off"
 	}
 
 	preferences {
@@ -323,6 +281,21 @@ def refresh() {
 	logDebug "refresh..."
 	executeRefreshCmds()
 }
+
+def getBatteryLevel() {
+	logDebug "getBatteryLevel..."
+	List<String> cmds = []
+    cmds << batteryGetCmd()
+	sendCommands(cmds)
+}
+
+def getRate() {
+	logDebug "getRate..."
+	List<String> cmds = []
+    cmds << waterMeterGetCmd(waterMeter)
+	sendCommands(cmds)
+}
+
 
 //List<String> Temp() { logDebug "Temp..."}
 
@@ -562,7 +535,7 @@ void zwaveEvent(hubitat.zwave.commands.notificationv8.NotificationReport cmd, ep
 			sendWaterAlarmEvent(cmd.event)
 			break
 		case waterValve:
-			sendValveEvent(cmd.event, cmd.eventParameter[0])
+			sendValveEvent(cmd.event, cmd.eventParameter[2])
 			break
         case homeSecurity:
 			sendhomeSecurityEvent(cmd.event)
@@ -572,30 +545,43 @@ void zwaveEvent(hubitat.zwave.commands.notificationv8.NotificationReport cmd, ep
 	}	
 }
 
-void zwaveEvent(hubitat.zwave.commands.meterv4.MeterReport cmd, ep=0) {
-	logTrace "${cmd} (ep ${ep})"
-        sendWaterMeterEvent(cmd.value)
+
+void zwaveEvent(hubitat.zwave.commands.batteryv1.BatteryReport cmd) {
+      Map evt = [name: "battery", unit: "%"]
+            if (cmd.batteryLevel == 0xFF) {
+            evt.descriptionText = "${device.displayName} has a low battery"
+            evt.value = 1
+      } else {
+            evt.value = cmd.batteryLevel
+            evt.descriptionText = "${device.displayName} battery is ${evt.value}${evt.unit}"
+      }
+      evt.isStateChange = true
+      if (txtEnable && evt.descriptionText) log.info evt.descriptionText
+      sendEvent(evt)
 }
 
 
-//void zwaveEvent(hubitat.zwave.commands.batteryv1.BatteryReport cmd, ep=0) {
-//	logTrace "${cmd} (ep ${ep})"
-//        sendBatteryEvent(cmd.value)
-//}
-void zwaveEvent(hubitat.zwave.commands.batteryv1.BatteryReport cmd, ep=0) {
-	logTrace "${cmd} (ep ${ep})"
-
-	Integer batLvl = cmd.batteryLevel
-	if (batLvl == 0xFF) {
-		batLvl = 1
-		logWarn "LOW BATTERY WARNING"
-	}
-
-	batLvl = validateRange(batLvl, 100, 1, 100)
-	String descText = "battery level is ${batLvl}%"
-    sendBatteryEvent(cmd.value)
-	//sendEventLog(name:"battery", value:batLvl, unit:"%", desc:descText, isStateChange:true)
+void zwaveEvent(hubitat.zwave.commands.meterv5.MeterReport cmd) {
+      
+      if (cmd.meterValue.size() > 0) {
+            Map evt = [:]
+          //Map evt = [name: "watermeter", unit: "GPM"]
+            if (cmd.meterType == 3) {
+                  switch (cmd.scale) {
+                        case 0:
+                              evt.name = "rate"
+                              evt.value = cmd.scaledMeterValue*3600/cmd.deltaTime
+                              evt.unit = "GPM"
+                              evt.descriptionText = "${device.displayName} rate is: ${evt.value}${evt.unit}"
+                           //   eventProcess(evt)
+                              sendEvent(evt)
+                              break
+            }
+        }
+    }
 }
+
+
 
 
 
@@ -689,7 +675,7 @@ List configSetGetCmd(Map param, Integer value) {
 //}
 
 String waterMeterGetCmd(meterType) {
-        return secureCmd(zwave.meterV5.meterGet(scale: 0))
+        return secureCmd(zwave.meterV5.meterGet(scale: 2))
 }
 
 /*******************************************************************

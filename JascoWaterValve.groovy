@@ -564,11 +564,11 @@ void zwaveEvent(hubitat.zwave.commands.batteryv1.BatteryReport cmd) {
 void zwaveEvent(hubitat.zwave.commands.meterv5.MeterReport cmd) {
       
       if (cmd.meterValue.size() > 0) {
-            Map evt = [:]
-          //Map evt = [name: "watermeter", unit: "GPM"]
+            //Map evt = [:]
+          Map evt = [name: "watermeter", unit: "LPH"]
             if (cmd.meterType == 3) {
                   switch (cmd.scale) {
-                        case 0:
+                        case 2:
                               evt.name = "rate"
                               evt.value = cmd.scaledMeterValue*3600/cmd.deltaTime
                               evt.unit = "GPM"

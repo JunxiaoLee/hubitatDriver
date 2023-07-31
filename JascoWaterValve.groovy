@@ -428,7 +428,7 @@ void zwaveEvent(hubitat.zwave.commands.multichannelv4.MultiChannelCmdEncap cmd) 
 	logTrace "${cmd} --ENCAP-- ${encapsulatedCmd}"
 	
 	if (encapsulatedCmd) {
-		(encapsulatedCmd, cmd.sourceEndPoint as Integer)
+		zwaveEvent(encapsulatedCmd, cmd.sourceEndPoint as Integer)
 	} else {
 		log.warn "Unable to extract encapsulated cmd from $cmd"
 	}

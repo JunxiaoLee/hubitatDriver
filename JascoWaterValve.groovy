@@ -4,14 +4,14 @@
  *
  *  Changelog:
 
-## [0.1.0] - 2023-04-03 
+## [0.1.0] - 2023-07-31 
   ### Added
   - Initial Release, supports all known settings and features except associations
 */
 
 import groovy.transform.Field
 
-@Field static final String VERSION = "0.1.0" 
+@Field static final String VERSION = "0.1.1" 
 @Field static final Map deviceModelNames = ["0004:0001":"JascoWaterValve"]
 
 metadata {

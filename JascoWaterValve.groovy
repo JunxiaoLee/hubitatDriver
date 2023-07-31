@@ -720,7 +720,7 @@ List configSetGetCmd(Map param, Integer value) {
 //}
 
 String waterMeterGetCmd(meterType) {
-        return secureCmd(zwave.meterV5.meterGet(scale: 0))
+        return secureCmd(zwave.meterV5.meterGet(scale: 2))
 }
 
 /*******************************************************************
